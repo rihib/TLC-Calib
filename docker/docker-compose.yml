@@ -1,0 +1,18 @@
+services:
+  tlc-calib:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: tlc-calib:latest
+    volumes:
+      - ..:/workspace/TLC-Calib
+    working_dir: /workspace/TLC-Calib
+    stdin_open: true
+    tty: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu, compute, utility]
