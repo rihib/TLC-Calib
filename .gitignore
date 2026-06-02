@@ -1,7 +1,6 @@
 *.pyc
 .vscode
 temp*
-output*
 debug*
 log*
 view*

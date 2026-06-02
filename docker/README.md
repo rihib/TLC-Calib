@@ -70,6 +70,24 @@ python train.py -s data/TLC-Calib/KITTI-360/large_rotation \
 - `data/` や `outputs/` もマウント配下にあるため、コンテナを終了・削除しても学習結果は残る。
 - コンテナを削除して再作成した場合、次回起動時に CUDA 拡張が再ビルドされる。
 
+### ベースイメージ選定理由
+
+ベースイメージには `pytorch/pytorch:2.1.2-cuda11.8-cudnn8-devel` を採用した。NGC イメージは NVIDIA が最適化した公式コンテナだが、このプロジェクトには適合しない。
+
+理由はリリースのタイミングにある。NGC イメージは 2023 年初頭に CUDA 12.x へ移行しており、PyTorch 2.1.x が登場した 2023 年 10 月以降のイメージはすべて CUDA 12.x を搭載している。一方、CUDA 11.8 を搭載した NGC イメージ（`22.12-py3` 等）には PyTorch 1.x しか含まれていない。**PyTorch 2.1.x と CUDA 11.8 を同時に満たす NGC イメージは存在しない。**
+
+[Framework Containers Support Matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html#framework-matrix-2022) を参照すると、CUDA 11.8 を使用するには 22.xx の NGC イメージを選ぶ必要があるが、これらはすべて PyTorch 1.1x を使用しているので、要件を満たさないことがわかる。
+
+加えて、NGC の PyTorch は `2.1.0a0+32f93b1` のような開発版ビルドであり、`environment.yml` が要求する安定版 `2.1.2` とは異なる。
+
+| 要件 | `pytorch/pytorch:2.1.2-cuda11.8-cudnn8-devel` |
+|---|---|
+| PyTorch 2.1.2（安定版） | 完全一致 |
+| CUDA 11.8 | 完全一致 |
+| nvcc（CUDA コンパイラ） | `devel` タグに含まれる |
+
+`devel` タグが必須なのは、`submodules/` 以下の CUDA 拡張（`.cu` ファイル）をコンテナ内でコンパイルするために nvcc が必要なためである。`runtime` タグには nvcc が含まれないためビルドに失敗する。
+
 ## 学習結果の確認
 
 ### 学習完了時の出力例
@@ -117,27 +135,3 @@ python metrics_pose.py -m outputs/kitti-360/large_rotation/eval
 # NVS 品質の詳細 → nvs_results.json が生成される
 python metrics_nvs.py -m outputs/kitti-360/large_rotation/eval
 ```
-
-## ベースイメージの選定理由
-
-ベースイメージには `pytorch/pytorch:2.1.2-cuda11.8-cudnn8-devel` を採用した。
-
-### NVIDIA NGC イメージ（`nvcr.io/nvidia/pytorch`）を使わない理由
-
-NGC イメージは NVIDIA が最適化した公式コンテナだが、このプロジェクトには適合しない。
-
-理由はリリースのタイミングにある。NGC イメージは 2023 年初頭に CUDA 12.x へ移行しており、PyTorch 2.1.x が登場した 2023 年 10 月以降のイメージはすべて CUDA 12.x を搭載している。一方、CUDA 11.8 を搭載した NGC イメージ（`22.12-py3` 等）には PyTorch 1.x しか含まれていない。**PyTorch 2.1.x と CUDA 11.8 を同時に満たす NGC イメージは存在しない。**
-
-[Framework Containers Support Matrix](https://docs.nvidia.com/deeplearning/frameworks/support-matrix/index.html#framework-matrix-2022) を参照すると、CUDA 11.8 を使用するには 22.xx の NGC イメージを選ぶ必要があるが、これらはすべて PyTorch 1.1x を使用しているので、要件を満たさないことがわかる。
-
-加えて、NGC の PyTorch は `2.1.0a0+32f93b1` のような開発版ビルドであり、`environment.yml` が要求する安定版 `2.1.2` とは異なる。
-
-### `pytorch/pytorch:2.1.2-cuda11.8-cudnn8-devel` を選んだ理由
-
-| 要件 | このイメージ |
-|---|---|
-| PyTorch 2.1.2（安定版） | 完全一致 |
-| CUDA 11.8 | 完全一致 |
-| nvcc（CUDA コンパイラ） | `devel` タグに含まれる |
-
-`devel` タグが必須なのは、`submodules/` 以下の CUDA 拡張（`.cu` ファイル）をコンテナ内でコンパイルするために nvcc が必要なためである。`runtime` タグには nvcc が含まれないためビルドに失敗する。

@@ -1,0 +1,15 @@
+Optimizing outputs/kitti-360/large_rotation/eval
+
+[ITER 30000] Evaluating test: Photo 0.040505 PSNR 22.459946, Rot_Err: 0.107243[deg], Trans_Err: 0.107389[m]
+[CAM 0] Evaluating test: Rot_Err: 0.104038[deg], Trans_Err: 0.107865[m]
+[CAM 1] Evaluating test: Rot_Err: 0.072395[deg], Trans_Err: 0.112141[m]
+[CAM 2] Evaluating test: Rot_Err: 0.159047[deg], Trans_Err: 0.094303[m]
+[CAM 3] Evaluating test: Rot_Err: 0.093491[deg], Trans_Err: 0.115246[m]
+
+[ITER 30000] Evaluating train: Photo 0.034866 PSNR 23.468560, Rot_Err: 0.107873[deg], Trans_Err: 0.107315[m]
+[CAM 0] Evaluating train: Rot_Err: 0.105132[deg], Trans_Err: 0.107750[m]
+[CAM 1] Evaluating train: Rot_Err: 0.072395[deg], Trans_Err: 0.111994[m]
+[CAM 2] Evaluating train: Rot_Err: 0.159917[deg], Trans_Err: 0.094417[m]
+[CAM 3] Evaluating train: Rot_Err: 0.094050[deg], Trans_Err: 0.115098[m]
+
+[ITER 30000] Saving Gaussians
