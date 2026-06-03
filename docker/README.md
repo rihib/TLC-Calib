@@ -7,7 +7,7 @@
 
 ## ファイル構成
 
-```
+```text
 docker/
 ├── Dockerfile          # ベースイメージ + Python 依存パッケージ
 ├── docker-compose.yml  # ボリュームマウント + GPU 設定
@@ -64,6 +64,24 @@ python train.py -s data/TLC-Calib/KITTI-360/large_rotation \
   --dataset kitti-360
 ```
 
+このコマンドは「KITTI-360 の `large_rotation` シーンについて、LiDAR 姿勢を初期値・足場にしつつ、同一カメラはリグとしてまとめて、カメラの外部パラメータを学習中に最適化し、ボクセル密度はシーン規模に合わせて自動調整したうえで、評価用分割込みで学習する」という指定である。出力は `outputs/kitti-360/large_rotation/eval` に保存される。
+
+各引数の意味は次のとおり（定義は `arguments/__init__.py`）:
+
+| 引数 | 意味 |
+| --- | --- |
+| `-s data/TLC-Calib/KITTI-360/large_rotation` | 入力データセットのパス（`--source_path` のショートハンド）。末尾のフォルダ名がシーン名として使われる。 |
+| `-m outputs/kitti-360/large_rotation/eval` | 学習結果（モデル・config・ログ）の出力先（`--model_path` のショートハンド）。 |
+| `--eval` | 評価モード。データを学習用とテスト用に分割し、新規視点合成（NVS）の精度を測れるよう test 画像を残す。 |
+| `--from_lidar` | カメラ姿勢の初期値を LiDAR 姿勢から作る。LiDAR オドメトリを足場（アンカー）にする TLC-Calib の中核設定。 |
+| `--use_rig` | リグ拘束。同じカメラ ID を持つフレーム群の姿勢をひとまとまりとして一緒に動かす。これにより全フレームの姿勢を個別に解かず、カメラごとの 1 つの外部パラメータ（キャリブレーション量）を解く。 |
+| `--opt_pose` | カメラ姿勢（キャリブレーション）を学習中に最適化する。立てると学習ループ内で姿勢を更新する。 |
+| `--pose_scheduler` | 姿勢最適化用の学習率スケジューラを有効化する。`--opt_pose` と併用したときのみ効き、学習率を徐々に減衰させる。 |
+| `--adaptive_voxel` | ボクセルサイズを LiDAR 軌跡長から自動決定する。固定値の代わりに「軌跡長 × `avc_beta`（既定 5000）」を目標ボクセル数として算出し、シーンの広さに応じてアンカー密度を合わせる。 |
+| `--dataset kitti-360` | データセット種別。選択肢は `kitti-360`, `kitti`, `waymo`, `fast-livo2`。センサ構成やファイル形式の読み分けに使う。 |
+
+なお `--from_lidar` と `--use_rig` を併用すると姿勢ノイズ注入が無効化される。これは「LiDAR 基準のクリーンな初期姿勢から始める」という設定と整合している。
+
 ## 補足
 
 - プロジェクトルートはコンテナ内の `/workspace/TLC-Calib` にマウントされるため、ファイルの変更はホストとコンテナで即座に共有される。
@@ -81,7 +99,7 @@ python train.py -s data/TLC-Calib/KITTI-360/large_rotation \
 加えて、NGC の PyTorch は `2.1.0a0+32f93b1` のような開発版ビルドであり、`environment.yml` が要求する安定版 `2.1.2` とは異なる。
 
 | 要件 | `pytorch/pytorch:2.1.2-cuda11.8-cudnn8-devel` |
-|---|---|
+| --- | --- |
 | PyTorch 2.1.2（安定版） | 完全一致 |
 | CUDA 11.8 | 完全一致 |
 | nvcc（CUDA コンパイラ） | `devel` タグに含まれる |
@@ -92,7 +110,7 @@ python train.py -s data/TLC-Calib/KITTI-360/large_rotation \
 
 ### 学習完了時の出力例
 
-```
+```text
 Training progress: 100%|████████| 30000/30000 [14:12<00:00, 35.20it/s, Loss=0.0808, are=0.1079, ate=0.1073, N=369820]
 
 [ITER 30000] Evaluating test: Photo 0.040505 PSNR 22.459946, Rot_Err: 0.107243[deg], Trans_Err: 0.107389[m]
@@ -107,7 +125,7 @@ Training progress: 100%|████████| 30000/30000 [14:12<00:00, 35.2
 ### 主要指標の見方
 
 | 指標 | 意味 |
-|---|---|
+| --- | --- |
 | `Rot_Err [deg]` | 回転キャリブレーション誤差（小さいほど良い） |
 | `Trans_Err [m]` | 並進キャリブレーション誤差（小さいほど良い） |
 | `PSNR [dB]` | 画像再構成品質（大きいほど良い） |
@@ -117,7 +135,7 @@ Training progress: 100%|████████| 30000/30000 [14:12<00:00, 35.2
 
 学習結果は `-m` で指定した出力ディレクトリ（例: `outputs/kitti-360/large_rotation/eval/`）に保存される。マウント経由でホスト上にも即座に反映される。
 
-```
+```text
 eval/
 ├── config.yml                        # 学習設定の記録
 ├── train_info.json                   # 学習時間・メモリ統計
